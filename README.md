@@ -1,2 +1,2 @@
 # Clean-gabc
-Clean and organize file .gabc
+Program to clarify gabc partions
