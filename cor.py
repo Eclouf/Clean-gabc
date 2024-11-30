@@ -1,19 +1,25 @@
-from colorama import init, Fore, Style
+from colorama import init, Fore, Style, just_fix_windows_console
+
 import re
 from datetime import datetime
 
 
 class CleanGABC:
-
-    def __init__(slef):
+    def __init__(self):
         init(autoreset=True)
+        just_fix_windows_console()
+        
 
     def color_text(self, filegabc):
-
         with open(filegabc, "r", encoding="utf-8") as file:
             content = file.read()
 
+        # Remplacer "%%" par sa version colorée
         content = content.replace("%%", Fore.GREEN + "%%")
+        pos = content.find("%%")
+        before = content[:pos + 2]
+        after = content[pos + 2:]
+        
         word_list = [
             "name:",
             "gabc-copyright:",
@@ -37,42 +43,39 @@ class CleanGABC:
             "annotation:",
             ";",
         ]
-        for word in word_list:
-            if word in content:
-                content = content.replace(
-                    word, Style.BRIGHT + Fore.YELLOW + word + Fore.RESET
-                )
 
-        pos = content.find("%%")
+        # Remplacement des mots en tenant compte de la casse
+        for word in word_list:
+            before = before.replace(word, Fore.YELLOW + word+ Fore.RESET )
+
 
         if pos != -1:
 
-            before = content[: pos + 2]
-            after = content[pos + 2 :]
-
             result = []
+            in_para_spe = False
             in_parentheses = False
             in_cran = False
-            in_para_spe = False
 
             for i in range(len(after)):
                 char = after[i]
-                if char in r".*+?'^${}/!§|_[]":
+                if char in r".*+?'^${}/!|_[]":
                     result.append(Fore.RED + char + Fore.RESET)
                 elif char == "(":
-                    if i + 1 < len(after) and after[i + 1] in r",;:":
+                    if i + 1 < len(after) and after[i + 1] in r'[,;:]':
                         result.append(Fore.YELLOW + char + Fore.RESET)
                         in_para_spe = True
                     else:
                         in_parentheses = True
                         result.append(Fore.CYAN + char + Fore.RESET)
                 elif char == ")":
-                    if i - 1 >= 0 and after[i - 1] in r",;:":
+                    if i - 1 >= 0 and after[i - 1] in r'[,;:]':
                         result.append(Fore.YELLOW + char + Fore.RESET)
                         in_para_spe = False
                     else:
                         in_parentheses = False
                         result.append(Fore.CYAN + char + Fore.RESET)
+                elif char == ";":
+                    result.append(Fore.YELLOW + char + Fore.RESET)
                 elif in_para_spe:
                     result.append(Fore.YELLOW + char + Fore.RESET)
                 elif in_parentheses:
@@ -94,6 +97,7 @@ class CleanGABC:
                     result.append(Fore.MAGENTA + char + Fore.RESET)
 
             content = before + "".join(result)
+            
         print(content)
 
     def insert_line_breaks(self, input_file, output_file):
@@ -106,7 +110,6 @@ class CleanGABC:
         
         filtred_lines = []
         date_y = False
-        ano_t = False
         ano_i = 0
         
         for line in lines:
@@ -122,9 +125,9 @@ class CleanGABC:
                 if "date:" in line:
                     filtred_lines.append(f"date:{date};\n")
                 elif "%%"in line and ano_i == 1:
-                    filtred_lines.append("annotation:;\n%%\n")
+                    filtred_lines.append("annotation:;\n\n%%\n\n")
                 elif "%%"in line and ano_i == 0:
-                    filtred_lines.append("annotation:;\nannotation:;\n%%\n")
+                    filtred_lines.append("annotation:;\nannotation:;\n\n%%\n\n")
                 else:
                     filtred_lines.append(line)
             
@@ -143,7 +146,10 @@ class CleanGABC:
             
         
         for char in ["(;)", "(:)", "(::)", "(,)"]:
-           content = content.replace(char, char + "\n" if content[content.index(char) + len(char):].startswith("\n") is False else char)
+            content = content.replace(char, char + "\n" if content[content.index(char) + len(char):].startswith("\n") is False else char)
+           
+        #for char in ["(c1)","(c2)","(c3)","(c4)", "(f3)","(f4)","(cb3)","(c2@c4)"]:
+            #content = content.replace(char, char+'\n\n')
            
         for char in ["<eu>","<nlba>"]:
             index = content.find(char)
