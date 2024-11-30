@@ -1,6 +1,7 @@
-import argparse
+import argparse, time
 import sys
 from cor import CleanGABC
+
 
 class Command:
     
@@ -24,6 +25,7 @@ Options:
         score = CleanGABC()
         
         try:
+            time_0 = time.time()
             args = parser.parse_args()
 
             
@@ -33,7 +35,9 @@ Options:
                 result = score.insert_line_breaks(args.file, args.file)
             if args.color:
                 score.color_text(result)
+            time_1 = time.time()
 
+            print(f"Execution de la tâche en : {time_1 - time_0 : .6f} seconde")
         except SystemExit as e:
             print("Erreur : Arguments non valides.")
             print("Utilisez -h ou --help pour voir l'aide.")

@@ -1,5 +1,6 @@
 from colorama import init, Fore, Style
 import re
+from datetime import datetime
 
 
 class CleanGABC:
@@ -56,7 +57,7 @@ class CleanGABC:
 
             for i in range(len(after)):
                 char = after[i]
-                if char in r".*+?'^${}!§|_[]":
+                if char in r".*+?'^${}/!§|_[]":
                     result.append(Fore.RED + char + Fore.RESET)
                 elif char == "(":
                     if i + 1 < len(after) and after[i + 1] in r",;:":
@@ -97,19 +98,64 @@ class CleanGABC:
 
     def insert_line_breaks(self, input_file, output_file):
         
-        with open(input_file, "r", encoding="utf-8") as file:
-            content = file.read()
-            print(content)
+        date = datetime.now()
+        date = date.strftime("%d/%m/%Y")
         
-        break_after_char = ["(;)", "(:)", "(::)", "(,)"]
-
-        for char in break_after_char:
-            content = content.replace(
-                char, char + "\n"
-            )  
+        with open(input_file, "r", encoding="utf-8") as file:
+            lines = file.readlines()
+        
+        filtred_lines = []
+        date_y = False
+        ano_t = False
+        ano_i = 0
+        
+        for line in lines:
+            if "date:" in line:
+                print("yes")
+                date_y = True
+            if "annotation:"in line:
+                ano_i += 1
+                print(ano_i)
+        
+        for line in lines:
+            if not line.startswith(("transcriber")):
+                if "date:" in line:
+                    filtred_lines.append(f"date:{date};\n")
+                elif "%%"in line and ano_i == 1:
+                    filtred_lines.append("annotation:;\n%%\n")
+                elif "%%"in line and ano_i == 0:
+                    filtred_lines.append("annotation:;\nannotation:;\n%%\n")
+                else:
+                    filtred_lines.append(line)
+            
+                    
+            if line.startswith("name:"):
+                match = re.search(r"name:\s*(.*?);", line)
+                
+                if match:
+                    name = match.group(1).strip()
+                    print(name)
+                    
+                if not date_y:
+                    filtred_lines.append(f"date:{date};\n")
+ 
+        content = ''.join(filtred_lines)
+            
+        
+        for char in ["(;)", "(:)", "(::)", "(,)"]:
+           content = content.replace(char, char + "\n" if content[content.index(char) + len(char):].startswith("\n") is False else char)
+           
+        for char in ["<eu>","<nlba>"]:
+            index = content.find(char)
+            while index != -1:
+            
+                if index == 0 or content[index - 1] != "\n":
+                    content = content.replace(char, "\n" + char, 1)
+                index = content.find(char, index + 1)
 
         with open(output_file, "w", encoding="utf-8") as file:
-            result =file.write(content)
+            file.write(content)
+            
         return output_file
         
 
