@@ -2,6 +2,10 @@ import argparse, time
 import sys
 from cor import CleanGABC
 
+RED = '\033[31m'      # Rouge
+GREEN = '\033[32m'    # Vert
+YELLOW = '\033[33m'   # Jaune
+RESET = '\033[0m'     # Réinitialiser la couleur
 
 class Command:
     
@@ -30,16 +34,16 @@ Options:
 
             
             if args.output:
-                result = score.insert_line_breaks(args.file, args.output)
+                result = score.clean(args.file, args.output)
             else:
-                result = score.insert_line_breaks(args.file, args.file)
+                result = score.clean(args.file, args.file)
             if args.color:
                 score.color_text(result)
             time_1 = time.time()
 
             print(f"Execution de la tâche en : {time_1 - time_0 : .6f} seconde")
         except SystemExit as e:
-            print("Erreur : Arguments non valides.")
+            print(RED+"[erro]"+RESET+" Arguments non valides.")
             print("Utilisez -h ou --help pour voir l'aide.")
             sys.exit(1)
 
